@@ -12,11 +12,16 @@ import javax.inject.Inject
 import scala.concurrent.Future
 import slick.driver.H2Driver.api._
 
-class UserController @Inject() (val dbConfigProvicer: DatabaseConfigProvider,
+class UserController @Inject() (val dbConfigProvider: DatabaseConfigProvider,
                                 val messagesApi: MessagesApi) extends Controller
     with HasDatabaseConfigProvider[JdbcProfile] with I18nSupport {
 
-  def list = TODO
+  def list = Action.async { implicit rs =>
+    // IDの昇順に全てのユーザ情報を取得
+    db.run(Users.sortBy(t => t.id).result).map { users =>
+      Ok(views.html.user.list(users))
+    }
+  }
 
   def edit(id: Option[Long]) = TODO
 
