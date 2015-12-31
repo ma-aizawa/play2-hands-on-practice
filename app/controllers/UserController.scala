@@ -56,9 +56,38 @@ class UserController @Inject() (val dbConfigProvider: DatabaseConfigProvider,
     }
   }
 
-  def create = TODO
+  def create = Action.async { implicit rs =>
+    // リクエストの内容をバインド
+    userForm.bindFromRequest.fold(
+      error => {
+        db.run(Companies.sortBy(t => t.id).result).map { companies =>
+          BadRequest(views.html.user.edit(error, companies))
+        }
+      },
+      form => {
+        val user = UsersRow(0, form.name, form.companyId)
+        db.run(Users += user).map { _ =>
+          Redirect(routes.UserController.list)
+        }
+      }
+    )
+  }
 
-  def update = TODO
+  def update = Action.async { implicit rs =>
+    userForm.bindFromRequest.fold(
+      error => {
+        db.run(Companies.sortBy(t => t.id).result).map { companies =>
+          BadRequest(views.html.user.edit(error, companies))
+        }
+      },
+      form => {
+        val user = UsersRow(form.id.get, form.name, form.companyId)
+        db.run(Users.filter(t => t.id === user.id.bind).update(user)).map { _ =>
+          Redirect(routes.UserController.list)
+        }
+      }
+    )
+  }
 
   def remove(id: Long) = TODO
 }
